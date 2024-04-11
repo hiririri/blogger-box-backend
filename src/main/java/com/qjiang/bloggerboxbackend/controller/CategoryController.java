@@ -10,8 +10,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
@@ -19,6 +22,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1")
+@Slf4j
 public class CategoryController {
     private CategoryService categoryService;
 
@@ -54,8 +58,19 @@ public class CategoryController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
-    @PutMapping("/category")
-    public ResponseEntity<CategoryDto> updateCategory(@RequestParam() String oldName, @RequestParam() String newName) {
+    @PutMapping("/category/{oldName}/{newName}")
+    public ResponseEntity<CategoryDto> updateCategory(@PathVariable() String oldName, @PathVariable() String newName) {
+        log.info("Updating category {} to {}", oldName, newName);
         return ResponseEntity.ok(categoryService.updateCategory(oldName, newName));
+    }
+
+    @Operation(summary = "Get all categories")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "500", description = "Server error",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryDto>> getAllCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 }

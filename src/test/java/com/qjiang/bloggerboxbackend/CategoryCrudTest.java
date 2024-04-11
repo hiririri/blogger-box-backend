@@ -1,96 +1,170 @@
 package com.qjiang.bloggerboxbackend;
 
-import com.qjiang.bloggerboxbackend.common.Result;
 import com.qjiang.bloggerboxbackend.dto.CategoryDto;
+import com.qjiang.bloggerboxbackend.exception.CategoryIntegrityViolationException;
+import com.qjiang.bloggerboxbackend.exception.CategoryNotFoundException;
 import com.qjiang.bloggerboxbackend.model.CategoryEntity;
 import com.qjiang.bloggerboxbackend.repository.CategoryRepository;
 import com.qjiang.bloggerboxbackend.service.impl.CategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE;
 
-@Import(CategoryCrudTest.CategoryTestConfiguration.class)
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = NONE)
 class CategoryCrudTest {
-    private static final String NAME = "Test Category";
-
-    private CategoryServiceImpl categoryService;
-    @Autowired
+    @Mock
     private CategoryRepository categoryRepository;
 
+    @InjectMocks
+    private CategoryServiceImpl categoryService;
+
     @BeforeEach
-    public void setUp() {
-        categoryService = new CategoryServiceImpl(categoryRepository);
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void should_return_success_when_create_category() {
-        // Given
-        CategoryDto categoryDto = CategoryDto.builder().name(NAME).build();
+    void createCategorySuccessfully() {
+        CategoryDto categoryDto = CategoryDto.builder().name("Test").build();
 
-        // When
-        var result = categoryService.createCategory(categoryDto);
+        when(categoryRepository.existsByName(anyString())).thenReturn(false);
+        when(categoryRepository.save(any())).thenReturn(new CategoryEntity());
 
-        // Then
-        var entity = categoryService.getCategoryByName(NAME);
-        assertThat(entity).isNotNull();
-        assertThat(result).isEqualTo(Result.success(CategoryDto.builder().name(NAME).build(), "Category created"));
+        CategoryDto result = categoryService.createCategory(categoryDto);
+
+        assertNotNull(result);
+        verify(categoryRepository, times(1)).existsByName(anyString());
+        verify(categoryRepository, times(1)).save(any());
     }
 
-    @Sql({"/data.sql"})
     @Test
-    void should_return_category() {
-        // When
-        var result = categoryService.getCategoryByName(NAME);
+    void createCategoryWithExistingName() {
+        CategoryDto categoryDto = CategoryDto.builder().name("Test").build();
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo(NAME);
+        when(categoryRepository.existsByName(anyString())).thenReturn(true);
+
+        assertThrows(CategoryIntegrityViolationException.class, () -> categoryService.createCategory(categoryDto));
+        verify(categoryRepository, times(1)).existsByName(anyString());
     }
 
-    @Sql({"/data.sql"})
     @Test
-    void should_update_category() {
-        // Given
-        var newName = "New Category";
+    void getCategoryByNameSuccessfully() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.of(new CategoryEntity()));
 
-        // When
-        var result = categoryService.updateCategory(newName, NAME);
+        CategoryDto result = categoryService.getCategoryByName("Test");
 
-        // Then
-        assertThat(result).isNotNull()
-                .isEqualTo(CategoryDto.builder().name(newName).build());
+        assertNotNull(result);
+        verify(categoryRepository, times(1)).findByName(anyString());
     }
 
-    @Sql({"/data.sql"})
     @Test
-    void should_delete_category() {
-        // When
-        var result = categoryService.deleteCategory(NAME);
+    void getCategoryByNameNotFound() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.empty());
 
-        // Then
-        assertThat(result).isNotNull().isEqualTo(CategoryDto.builder().name(NAME).build());
-
-        System.out.println(result);
+        assertThrows(CategoryNotFoundException.class, () -> categoryService.getCategoryByName("Test"));
+        verify(categoryRepository, times(1)).findByName(anyString());
     }
 
-    @Configuration
-    @EnableJpaRepositories(basePackageClasses = CategoryRepository.class)
-    @EntityScan(basePackageClasses = CategoryEntity.class)
-    static class CategoryTestConfiguration {
+    @Test
+    void updateCategorySuccessfully() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.of(new CategoryEntity()));
+        when(categoryRepository.existsByName(anyString())).thenReturn(false);
+        when(categoryRepository.save(any())).thenReturn(new CategoryEntity());
+
+        CategoryDto result = categoryService.updateCategory("OldTest", "NewTest");
+
+        assertNotNull(result);
+        verify(categoryRepository, times(1)).findByName(anyString());
+        verify(categoryRepository, times(1)).existsByName(anyString());
+        verify(categoryRepository, times(1)).save(any());
+    }
+
+    @Test
+    void updateCategoryWithExistingName() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.of(new CategoryEntity()));
+        when(categoryRepository.existsByName(anyString())).thenReturn(true);
+
+        assertThrows(CategoryIntegrityViolationException.class, () -> categoryService.updateCategory("OldTest", "NewTest"));
+        verify(categoryRepository, times(1)).findByName(anyString());
+        verify(categoryRepository, times(1)).existsByName(anyString());
+    }
+
+    @Test
+    void deleteCategorySuccessfully() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.of(new CategoryEntity()));
+
+        CategoryDto result = categoryService.deleteCategory("Test");
+
+        assertNotNull(result);
+        verify(categoryRepository, times(1)).findByName(anyString());
+        verify(categoryRepository, times(1)).delete((CategoryEntity) any());
+    }
+
+    @Test
+    void deleteCategoryNotFound() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+        assertThrows(CategoryNotFoundException.class, () -> categoryService.deleteCategory("Test"));
+        verify(categoryRepository, times(1)).findByName(anyString());
+    }
+
+    @Test
+    void createCategoryWithNullName() {
+        CategoryDto categoryDto = CategoryDto.builder().build();
+
+        assertThrows(IllegalArgumentException.class, () -> categoryService.createCategory(categoryDto));
+    }
+
+    @Test
+    void createCategoryWithEmptyName() {
+        CategoryDto categoryDto = CategoryDto.builder().name("").build();
+
+        assertThrows(IllegalArgumentException.class, () -> categoryService.createCategory(categoryDto));
+    }
+
+    @Test
+    void updateCategoryWithNullNewName() {
+        assertThrows(IllegalArgumentException.class, () -> categoryService.updateCategory("OldTest", null));
+    }
+
+    @Test
+    void updateCategoryWithEmptyNewName() {
+        assertThrows(IllegalArgumentException.class, () -> categoryService.updateCategory("OldTest", ""));
+    }
+
+    @Test
+    void updateCategoryNotFound() {
+        when(categoryRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+        assertThrows(CategoryNotFoundException.class, () -> categoryService.updateCategory("OldTest", "NewTest"));
+        verify(categoryRepository, times(1)).findByName(anyString());
+    }
+
+    @Test
+    void getAllCategoriesSuccessfully() {
+        when(categoryRepository.findAll()).thenReturn(List.of(new CategoryEntity()));
+
+        List<CategoryDto> result = categoryService.getAllCategories();
+
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        verify(categoryRepository, times(1)).findAll();
     }
 }
