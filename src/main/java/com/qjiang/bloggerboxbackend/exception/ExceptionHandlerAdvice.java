@@ -42,4 +42,22 @@ public class ExceptionHandlerAdvice {
         log.error(HANDLE_EXCEPTION_MSG + e.getMessage(), e);
         return new ResponseEntity<>(new ApiError("TRANSIENT_DATA_ACCESS", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ApiError> handlePostNotFoundException(PostNotFoundException e) {
+        log.error(HANDLE_EXCEPTION_MSG + e.getMessage(), e);
+        return new ResponseEntity<>(new ApiError("POST_NOT_FOUND", e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(PostIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handlePostIntegrityViolationException(PostIntegrityViolationException e) {
+        log.error(HANDLE_EXCEPTION_MSG + e.getMessage(), e);
+        return new ResponseEntity<>(new ApiError("POST_INTEGRITY_VIOLATION", e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PostTransactionException.class)
+    public ResponseEntity<ApiError> handlePostTransactionException(PostTransactionException e) {
+        log.error(HANDLE_EXCEPTION_MSG + e.getMessage(), e);
+        return new ResponseEntity<>(new ApiError("POST_TRANSACTION_ERROR", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
