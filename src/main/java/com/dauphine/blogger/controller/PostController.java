@@ -1,7 +1,9 @@
 package com.dauphine.blogger.controller;
 
+import com.dauphine.blogger.dto.CreatePostRequest;
 import com.dauphine.blogger.dto.PostDto;
 import com.dauphine.blogger.dto.PostUpdateDto;
+import com.dauphine.blogger.dto.UpdatePostRequest;
 import com.dauphine.blogger.exception.ApiError;
 import com.dauphine.blogger.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +26,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 @Tag(name = "Posts")
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/posts")
 @Slf4j
 public class PostController {
     private PostService postService;
@@ -39,12 +41,12 @@ public class PostController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
-    @PostMapping("/post")
+    @PostMapping("/")
     @ResponseStatus(value = CREATED)
     public void addPost(
             @Parameter(description = "Post object to be created", required = true)
             @Valid
-            @RequestBody PostDto post) {
+            @RequestBody CreatePostRequest post) {
         log.info("Creating post with title: {}", post.getTitle());
         log.info("POST: http://localhost:8080/api/v1/post");
         postService.addPost(post);
@@ -80,11 +82,28 @@ public class PostController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
-    @GetMapping("/posts")
-    public ResponseEntity<List<PostDto>> getAllPosts() {
+    @GetMapping("/")
+    public ResponseEntity<List<PostDto>> getAllPostsOrderByCreatedDate() {
         log.info("Retrieving all posts");
         log.info("GET: http://localhost:8080/api/v1/posts");
         return ResponseEntity.ok(postService.getAllPosts());
+    }
+
+    @Operation(
+            summary = "Get all posts by category",
+            description = "Get all posts in the database by category"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "500", description = "Server error",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
+    @GetMapping("/category/{name}")
+    public ResponseEntity<List<PostDto>> getAllPostsByCategory(@PathVariable String name) {
+        log.info("Retrieving all posts by category: {}", name);
+        log.info("GET: http://localhost:8080/api/v1/posts/category/{}", name);
+        return ResponseEntity.ok(postService.getAllPostsByCategory(name));
     }
 
     @Operation(summary = "Update post by title")
@@ -94,11 +113,11 @@ public class PostController {
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
-    @PutMapping("/post")
+    @PutMapping("/")
     public void updatePost(
             @Parameter(description = "Post object to be updated", required = true)
             @Valid
-            @RequestBody PostUpdateDto post
+            @RequestBody UpdatePostRequest post
     ) {
         log.info("Updating post with title: {}", post.getTitle());
         log.info("PUT: http://localhost:8080/api/v1/post");
