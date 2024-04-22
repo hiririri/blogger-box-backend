@@ -1,13 +1,14 @@
 package com.dauphine.blogger.service.impl;
 
-import com.dauphine.blogger.mapper.PostMapper;
-import com.dauphine.blogger.model.PostEntity;
+import com.dauphine.blogger.dto.CreatePostRequest;
 import com.dauphine.blogger.dto.PostDto;
 import com.dauphine.blogger.exception.CategoryIntegrityViolationException;
 import com.dauphine.blogger.exception.PostIntegrityViolationException;
 import com.dauphine.blogger.exception.PostNotFoundException;
 import com.dauphine.blogger.exception.PostTransactionException;
+import com.dauphine.blogger.mapper.PostMapper;
 import com.dauphine.blogger.model.CategoryEntity;
+import com.dauphine.blogger.model.PostEntity;
 import com.dauphine.blogger.repository.CategoryRepository;
 import com.dauphine.blogger.repository.PostRepository;
 import com.dauphine.blogger.service.PostService;
@@ -26,24 +27,24 @@ public class PostServiceImpl implements PostService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public void addPost(PostDto postDto) {
-        if (postDto.getCategory() == null || postDto.getCategory().getName().trim().isEmpty()) {
+    public void addPost(CreatePostRequest postRequest) {
+        if (postRequest.getCategory() == null || postRequest.getCategory().getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Category name cannot be null or empty");
         }
 
-        if (postDto.getTitle() == null || postDto.getTitle().trim().isEmpty()) {
+        if (postRequest.getTitle() == null || postRequest.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Post title cannot be null or empty");
         }
 
-        if (postRepository.existsByTitle(postDto.getTitle())) {
-            throw new PostIntegrityViolationException("A post with the title " + postDto.getTitle() + " already exists");
+        if (postRepository.existsByTitle(postRequest.getTitle())) {
+            throw new PostIntegrityViolationException("A post with the title " + postRequest.getTitle() + " already exists");
         }
 
-        CategoryEntity category = categoryRepository.findByName(postDto.getCategory().getName())
+        CategoryEntity category = categoryRepository.findByName(postRequest.getCategory().getName())
                 .orElseGet(() -> {
                     try {
                         return categoryRepository.save(CategoryEntity.builder()
-                                .name(postDto.getCategory().getName())
+                                .name(postRequest.getCategory().getName())
                                 .build());
                     } catch (DataIntegrityViolationException e) {
                         throw new CategoryIntegrityViolationException("Failed to save new category due to integrity constraints", e);
@@ -52,7 +53,7 @@ public class PostServiceImpl implements PostService {
 
         // Attempt to save the post
         try {
-            postRepository.save(PostMapper.toEntity(postDto, category));
+            postRepository.save(PostMapper.toEntity(postRequest, category));
         } catch (DataIntegrityViolationException e) {
             throw new PostIntegrityViolationException("Failed to save the post due to integrity constraints", e);
         }
@@ -70,6 +71,7 @@ public class PostServiceImpl implements PostService {
         try {
             return postRepository.findAll().stream()
                     .map(PostMapper::toDto)
+                    .sorted((p1, p2) -> p2.getCreatedDate().compareTo(p1.getCreatedDate()))
                     .collect(Collectors.toList());
         } catch (DataAccessException e) {
             throw new PostTransactionException("Failed to retrieve all posts", e);
@@ -99,5 +101,18 @@ public class PostServiceImpl implements PostService {
         } catch (DataAccessException e) {
             throw new PostTransactionException("Failed to delete post", e);
         }
+    }
+
+    @Override
+    public List<PostDto> getAllPostsByCategory(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category name cannot be null or empty");
+        }
+        if (!categoryRepository.existsByName(name)) {
+            throw new IllegalArgumentException("Category with name " + name + " does not exist");
+        }
+        return postRepository.findByCategoryName(name).stream()
+                .map(post -> post.map(PostMapper::toDto).orElse(null))
+                .collect(Collectors.toList());
     }
 }

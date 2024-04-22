@@ -6,7 +6,6 @@ import lombok.*;
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-public class CategoryDto {
-    String id;
+public class UpdateCategoryRequest {
     String name;
 }
