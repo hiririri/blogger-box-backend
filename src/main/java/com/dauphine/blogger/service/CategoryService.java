@@ -1,17 +1,18 @@
 package com.dauphine.blogger.service;
 
+import com.dauphine.blogger.dto.CreationCategoryRequest;
 import com.dauphine.blogger.dto.CategoryDto;
 
 import java.util.List;
 
 public interface CategoryService {
-    CategoryDto createCategory(CategoryDto category);
+    CategoryDto createCategory(CreationCategoryRequest category);
 
-    CategoryDto getCategoryByName(String testCategory);
+    CategoryDto getCategoryById(String id);
 
-    CategoryDto updateCategory(String newName, String oldName);
+    CategoryDto updateCategory(String id, String name);
 
-    CategoryDto deleteCategory(String name);
+    CategoryDto deleteCategory(String id);
 
     List<CategoryDto> getAllCategories();
 }
