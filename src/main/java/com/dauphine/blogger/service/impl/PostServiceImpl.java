@@ -111,8 +111,9 @@ public class PostServiceImpl implements PostService {
         if (!categoryRepository.existsByName(name)) {
             throw new IllegalArgumentException("Category with name " + name + " does not exist");
         }
-        return postRepository.findByCategoryName(name).stream()
-                .map(post -> post.map(PostMapper::toDto).orElse(null))
+        return postRepository.findByCategoryName(name)
+                .stream()
+                .map(PostMapper::toDto)
                 .collect(Collectors.toList());
     }
 }

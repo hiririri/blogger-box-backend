@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.CREATED;
@@ -38,7 +39,7 @@ public class CategoryController {
     @ResponseStatus(value = CREATED)
     public ResponseEntity<CategoryDto> createCategory(@RequestBody() CreationCategoryRequest category) {
         log.info("Creating category with name: {}", category.getName());
-        log.info("POST /api/v1/categories/category");
+        log.info("POST: http://localhost:8080/api/v1/categories/");
         return ResponseEntity.ok(categoryService.createCategory(category));
     }
 
@@ -52,7 +53,7 @@ public class CategoryController {
     @GetMapping("/category/{id}")
     public ResponseEntity<CategoryDto> getCategoryById(@PathVariable() String id) {
         log.info("Getting category with id: {}", id);
-        log.info("GET /api/v1/categories/category/{}", id);
+        log.info("GET: http://localhost:8080/api/v1/categories/category/{}", id);
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
@@ -66,7 +67,7 @@ public class CategoryController {
     @PutMapping("/category/{id}/{name}")
     public ResponseEntity<CategoryDto> updateCategory(@PathVariable() String id, @PathVariable() String name) {
         log.info("Updating category with id: {} and name: {}", id, name);
-        log.info("PUT /api/v1/categories/category/{}/{}", id, name);
+        log.info("PUT: http://localhost:8080/api/v1/categories/category/{}/{}", id, name);
         return ResponseEntity.ok(categoryService.updateCategory(id, name));
     }
 
@@ -80,7 +81,7 @@ public class CategoryController {
     @DeleteMapping("/category/{id}")
     public ResponseEntity<CategoryDto> deleteCategory(@PathVariable("id") String id) {
         log.info("Deleting category with id: {}", id);
-        log.info("DELETE /api/v1/categories/category/{}", id);
+        log.info("DELETE: http://localhost:8080/api/v1/categories/category/{}", id);
         return ResponseEntity.ok(categoryService.deleteCategory(id));
     }
 
@@ -92,7 +93,7 @@ public class CategoryController {
     @GetMapping("/")
     public ResponseEntity<List<CategoryDto>> getAllCategories() {
         log.info("Getting all categories");
-        log.info("GET /api/v1/categories/");
+        log.info("GET: http://localhost:8080/api/v1/categories/");
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 }

@@ -13,5 +13,5 @@ public interface PostRepository extends JpaRepository<PostEntity, String>, JpaSp
 
     boolean existsByTitle(String title);
 
-    List<Optional<PostEntity>> findByCategoryName(String name);
+    List<PostEntity> findByCategoryName(String name);
 }
