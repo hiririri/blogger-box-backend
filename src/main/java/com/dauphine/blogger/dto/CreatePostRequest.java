@@ -9,5 +9,5 @@ import lombok.*;
 public class CreatePostRequest {
     String title;
     String content;
-    CategoryDto category;
+    String categoryId;
 }

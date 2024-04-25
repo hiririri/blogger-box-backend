@@ -1,89 +1,79 @@
 package com.dauphine.blogger.service.impl;
 
 import com.dauphine.blogger.dto.CreatePostRequest;
-import com.dauphine.blogger.dto.PostDto;
-import com.dauphine.blogger.exception.CategoryIntegrityViolationException;
 import com.dauphine.blogger.exception.PostIntegrityViolationException;
 import com.dauphine.blogger.exception.PostNotFoundException;
 import com.dauphine.blogger.exception.PostTransactionException;
-import com.dauphine.blogger.mapper.PostMapper;
 import com.dauphine.blogger.model.CategoryEntity;
 import com.dauphine.blogger.model.PostEntity;
-import com.dauphine.blogger.repository.CategoryRepository;
 import com.dauphine.blogger.repository.PostRepository;
+import com.dauphine.blogger.service.CategoryService;
 import com.dauphine.blogger.service.PostService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @AllArgsConstructor
 @Transactional
 public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @Override
-    public void addPost(CreatePostRequest postRequest) {
-        if (postRequest.getCategory() == null || postRequest.getCategory().getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Category name cannot be null or empty");
-        }
-
+    public PostEntity create(CreatePostRequest postRequest) {
         if (postRequest.getTitle() == null || postRequest.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Post title cannot be null or empty");
         }
 
-        if (postRepository.existsByTitle(postRequest.getTitle())) {
-            throw new PostIntegrityViolationException("A post with the title " + postRequest.getTitle() + " already exists");
+        CategoryEntity category = categoryService.getById(postRequest.getCategoryId());
+
+        PostEntity entity = PostEntity.builder()
+                .id(UUID.randomUUID().toString())
+                .title(postRequest.getTitle())
+                .content(postRequest.getContent())
+                .createdDate(LocalDateTime.now())
+                .category(category)
+                .build();
+
+        if (postRepository.existsById(entity.getId())) {
+            throw new PostIntegrityViolationException("Post with id '" + entity.getId() + "' already exists");
         }
 
-        CategoryEntity category = categoryRepository.findByName(postRequest.getCategory().getName())
-                .orElseGet(() -> {
-                    try {
-                        return categoryRepository.save(CategoryEntity.builder()
-                                .name(postRequest.getCategory().getName())
-                                .build());
-                    } catch (DataIntegrityViolationException e) {
-                        throw new CategoryIntegrityViolationException("Failed to save new category due to integrity constraints", e);
-                    }
-                });
-
-        // Attempt to save the post
-        try {
-            postRepository.save(PostMapper.toEntity(postRequest, category));
-        } catch (DataIntegrityViolationException e) {
-            throw new PostIntegrityViolationException("Failed to save the post due to integrity constraints", e);
-        }
+        return postRepository.save(entity);
     }
 
     @Override
-    public PostDto getPostByTitle(String title) {
-        return postRepository.findByTitle(title)
-                .map(PostMapper::toDto)
-                .orElseThrow(() -> new PostNotFoundException("Post with title '" + title + "' not found"));
+    public PostEntity getPostById(String postId) {
+        return postRepository.findByTitle(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found with title: " + postId));
     }
 
     @Override
-    public List<PostDto> getAllPosts() {
+    public List<PostEntity> getAll() {
         try {
-            return postRepository.findAll().stream()
-                    .map(PostMapper::toDto)
-                    .sorted((p1, p2) -> p2.getCreatedDate().compareTo(p1.getCreatedDate()))
-                    .collect(Collectors.toList());
+            categoryService.getAll();
+            return postRepository.findAll((root, query, builder) -> {
+                query.orderBy(builder.desc(root.get("createdDate")));
+                return query.getRestriction();
+            });
         } catch (DataAccessException e) {
             throw new PostTransactionException("Failed to retrieve all posts", e);
         }
     }
 
     @Override
-    public void updatePost(String title, String content) {
-        PostEntity postEntity = postRepository.findByTitle(title)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with title: " + title));
+    public void update(String postId, String title, String content) {
+        PostEntity postEntity = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + postId));
 
         try {
+            postEntity.setTitle(title);
             postEntity.setContent(content);
             postRepository.save(postEntity);
         } catch (DataAccessException e) {
@@ -92,9 +82,9 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void deletePost(String title) {
-        PostEntity postEntity = postRepository.findByTitle(title)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with title: " + title));
+    public void deleteById(String postId) {
+        PostEntity postEntity = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found with title: " + postId));
 
         try {
             postRepository.delete(postEntity);
@@ -104,16 +94,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDto> getAllPostsByCategory(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Category name cannot be null or empty");
-        }
-        if (!categoryRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Category with name " + name + " does not exist");
-        }
-        return postRepository.findByCategoryName(name)
-                .stream()
-                .map(PostMapper::toDto)
-                .collect(Collectors.toList());
+    public List<PostEntity> getAllByCategoryId(String categoryId) {
+        return postRepository.findByCategory(categoryService.getById(categoryId));
     }
 }
