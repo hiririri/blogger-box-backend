@@ -1,10 +1,7 @@
 package com.dauphine.blogger.service.impl;
 
-import com.dauphine.blogger.dto.CreationCategoryRequest;
-import com.dauphine.blogger.dto.CategoryDto;
 import com.dauphine.blogger.exception.CategoryIntegrityViolationException;
 import com.dauphine.blogger.exception.CategoryNotFoundException;
-import com.dauphine.blogger.mapper.CategoryMapper;
 import com.dauphine.blogger.model.CategoryEntity;
 import com.dauphine.blogger.repository.CategoryRepository;
 import com.dauphine.blogger.service.CategoryService;
@@ -20,33 +17,30 @@ public class CategoryServiceImpl implements CategoryService {
     private CategoryRepository categoryRepository;
 
     @Override
-    public CategoryDto createCategory(CreationCategoryRequest creationRequest) {
-        if (creationRequest.getName() == null || creationRequest.getName().trim().isEmpty()) {
+    public CategoryEntity create(String name) {
+        if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Category name cannot be null or empty");
         }
 
-        if (categoryRepository.existsByName(creationRequest.getName())) {
-            throw new CategoryIntegrityViolationException("A category with the name " + creationRequest.getName() + " already exists");
+        if (categoryRepository.existsByName(name)) {
+            throw new CategoryIntegrityViolationException("A category with the name {" + name + "} already exists");
         }
 
         try {
-            CategoryEntity entity = CategoryMapper.toEntity(creationRequest);
-            entity = categoryRepository.save(entity);
-            return CategoryMapper.toDto(entity);
+            return categoryRepository.save(CategoryEntity.builder().name(name).build());
         } catch (Exception e) {
             throw new TransactionException("Failed to create category due to a transaction issue", e);
         }
     }
 
     @Override
-    public CategoryDto getCategoryById(String id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(id)
+    public CategoryEntity getById(String id) {
+        return categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException("Category with id " + id + " not found"));
-        return CategoryMapper.toDto(categoryEntity);
     }
 
     @Override
-    public CategoryDto updateCategory(String id, String name) {
+    public CategoryEntity update(String id, String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("New category name cannot be null or empty");
         }
@@ -60,15 +54,14 @@ public class CategoryServiceImpl implements CategoryService {
 
         try {
             categoryEntity.setName(name);
-            categoryEntity = categoryRepository.save(categoryEntity);
-            return CategoryMapper.toDto(categoryEntity);
+            return categoryRepository.save(categoryEntity);
         } catch (Exception e) {
             throw new TransactionException("Failed to update category due to a transaction issue", e);
         }
     }
 
     @Override
-    public CategoryDto deleteCategory(String id) {
+    public void deleteById(String id) {
         CategoryEntity categoryEntity = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException("Category with id " + id + " not found"));
 
@@ -77,13 +70,10 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (Exception e) {
             throw new TransactionException("Failed to delete category due to a transaction issue", e);
         }
-        return CategoryMapper.toDto(categoryEntity);
     }
 
     @Override
-    public List<CategoryDto> getAllCategories() {
-        return categoryRepository.findAll().stream()
-                .map(CategoryMapper::toDto)
-                .toList();
+    public List<CategoryEntity> getAll() {
+        return categoryRepository.findAll();
     }
 }

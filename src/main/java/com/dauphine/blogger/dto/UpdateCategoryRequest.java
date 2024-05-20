@@ -7,5 +7,6 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 public class UpdateCategoryRequest {
+    String id;
     String name;
 }

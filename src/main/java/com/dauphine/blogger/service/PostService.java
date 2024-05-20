@@ -1,20 +1,20 @@
 package com.dauphine.blogger.service;
 
 import com.dauphine.blogger.dto.CreatePostRequest;
-import com.dauphine.blogger.dto.PostDto;
+import com.dauphine.blogger.model.PostEntity;
 
 import java.util.List;
 
 public interface PostService {
-    void addPost(CreatePostRequest post);
+    PostEntity create(CreatePostRequest post);
 
-    PostDto getPostByTitle(String title);
+    PostEntity getPostById(String title);
 
-    List<PostDto> getAllPosts();
+    List<PostEntity> getAll();
 
-    void updatePost(String title, String content);
+    void update(String postId, String title, String content);
 
-    void deletePost(String title);
+    void deleteById(String id);
 
-    List<PostDto> getAllPostsByCategory(String name);
+    List<PostEntity> getAllByCategoryId(String id);
 }

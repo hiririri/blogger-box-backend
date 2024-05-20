@@ -13,8 +13,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 public class ServiceConfiguration {
     @Bean
-    public PostServiceImpl postService(PostRepository postRepository, CategoryRepository categoryRepository) {
-        return new PostServiceImpl(postRepository, categoryRepository);
+    public PostServiceImpl postService(PostRepository postRepository, CategoryService categoryService) {
+        return new PostServiceImpl(postRepository, categoryService);
     }
 
     @Bean
