@@ -60,6 +60,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
     @GetMapping("/post/{postId}")
@@ -97,6 +99,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
     @GetMapping("/category/{categoryId}")
@@ -111,6 +115,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "204", description = "Updated"),
             @ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "500", description = "Server error",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class)))})
