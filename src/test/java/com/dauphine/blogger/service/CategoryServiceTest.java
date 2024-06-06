@@ -11,11 +11,11 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class CategoryServiceTest {
-
     @Mock
     private CategoryService categoryService;
 
@@ -25,7 +25,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void createCategorySuccessfully() {
+    void shouldCreateCategorySuccessfullyWhenValidInput() {
         CategoryEntity category = new CategoryEntity();
         category.setName("Test");
         when(categoryService.create("Test")).thenReturn(category);
@@ -35,7 +35,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void getCategoryByIdSuccessfully() {
+    void shouldGetCategoryByIdSuccessfullyWhenIdExists() {
         CategoryEntity category = new CategoryEntity();
         category.setId("1");
         when(categoryService.getById("1")).thenReturn(category);
@@ -45,7 +45,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void updateCategorySuccessfully() {
+    void shouldUpdateCategorySuccessfullyWhenValidInput() {
         CategoryEntity category = new CategoryEntity();
         category.setId("1");
         category.setName("Test");
@@ -56,14 +56,14 @@ class CategoryServiceTest {
     }
 
     @Test
-    void deleteCategoryByIdSuccessfully() {
+    void shouldDeleteCategoryByIdSuccessfullyWhenIdExists() {
         doNothing().when(categoryService).deleteById("1");
         categoryService.deleteById("1");
         verify(categoryService, times(1)).deleteById("1");
     }
 
     @Test
-    void getAllCategoriesSuccessfully() {
+    void shouldGetAllCategoriesSuccessfullyWhenCategoriesExist() {
         CategoryEntity category1 = new CategoryEntity();
         CategoryEntity category2 = new CategoryEntity();
         List<CategoryEntity> categories = Arrays.asList(category1, category2);
@@ -74,35 +74,35 @@ class CategoryServiceTest {
     }
 
     @Test
-    void createCategoryFails() {
+    void shouldThrowExceptionWhenCreateCategoryAndCategoryAlreadyExists() {
         when(categoryService.create("Test")).thenThrow(new CategoryIntegrityViolationException("Test category already exists"));
 
         assertThrows(CategoryIntegrityViolationException.class, () -> categoryService.create("Test"));
     }
 
     @Test
-    void getCategoryByIdFails() {
+    void shouldThrowExceptionWhenGetCategoryByIdAndIdDoesNotExist() {
         when(categoryService.getById("1")).thenThrow(new CategoryNotFoundException("Category not found"));
 
         assertThrows(CategoryNotFoundException.class, () -> categoryService.getById("1"));
     }
 
     @Test
-    void updateCategoryFails() {
+    void shouldThrowExceptionWhenUpdateCategoryAndIdDoesNotExist() {
         when(categoryService.update("1", "Test")).thenThrow(new CategoryNotFoundException("Category not found"));
 
         assertThrows(CategoryNotFoundException.class, () -> categoryService.update("1", "Test"));
     }
 
     @Test
-    void deleteCategoryByIdFails() {
+    void shouldThrowExceptionWhenDeleteCategoryByIdAndIdDoesNotExist() {
         doThrow(new CategoryNotFoundException("Category not found")).when(categoryService).deleteById("1");
 
         assertThrows(CategoryNotFoundException.class, () -> categoryService.deleteById("1"));
     }
 
     @Test
-    void getAllCategoriesFails() {
+    void shouldThrowExceptionWhenGetAllCategoriesAndNoCategoriesExist() {
         when(categoryService.getAll()).thenThrow(new CategoryNotFoundException("No categories found"));
 
         assertThrows(CategoryNotFoundException.class, () -> categoryService.getAll());

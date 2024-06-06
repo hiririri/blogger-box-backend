@@ -3,26 +3,22 @@ package com.dauphine.blogger.controller;
 import com.dauphine.blogger.dto.CreatePostRequest;
 import com.dauphine.blogger.dto.UpdatePostRequest;
 import com.dauphine.blogger.exception.PostNotFoundException;
-import com.dauphine.blogger.model.CategoryEntity;
 import com.dauphine.blogger.model.PostEntity;
-import com.dauphine.blogger.repository.CategoryRepository;
 import com.dauphine.blogger.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 class PostControllerTest {
 
@@ -45,7 +41,7 @@ class PostControllerTest {
         request.setContent("Test Content");
         request.setCategoryId("1");
 
-        when(postService.create(any())).thenReturn(null); // Assuming create() method returns null on success
+        when(postService.create(any())).thenReturn(null);
 
         postController.addPost(request);
 
